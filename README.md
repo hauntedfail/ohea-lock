@@ -124,12 +124,14 @@ lock.unsubscribe_all().await?;
 ```bash
 # Unit tests
 cargo test --features btleplug-support
+```
 
-# Hardware tests (requires paired device)
-cargo test --features test-hardware -- --nocapture
+## Interactive Debug Tool
 
-# Pairing test (run once per new device)
-cargo test --features test-pairing -- --nocapture
+For hardware debugging and interactive testing:
+
+```bash
+cargo run --example debug --features btleplug-support
 ```
 
 ## License
