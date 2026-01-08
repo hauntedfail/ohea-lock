@@ -136,4 +136,4 @@ cargo run --example debug --features btleplug-support
 
 ## License
 
-MIT OR Apache-2.0
+GPL-3.0

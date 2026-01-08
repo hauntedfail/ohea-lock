@@ -1,11 +1,19 @@
 [package]
 name = "ohea-lock"
 version = "0.1.0"
+authors = ["VVX Club", "VVX Supp", "nonnil"]
 edition = "2024"
 description = "Rust library for controlling Ohea Lock BLE smart locks"
-license = "MIT OR Apache-2.0"
-keywords = ["ble", "bluetooth", "smart-lock", "iot"]
+license = "GPL-3.0"
+repository = "https://github.com/v-vx/ohea-lock"
+homepage = "https://github.com/v-vx/ohea-lock"
+readme = "README.md"
+keywords = ["ble", "bluetooth", "smart-lock", "iot", "lixil"]
 categories = ["hardware-support", "embedded"]
+
+[lib]
+name = "ohea_lock"
+path = "src/lib.rs"
 
 [features]
 default = []
