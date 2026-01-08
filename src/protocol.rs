@@ -98,9 +98,9 @@ pub const DEVICE_NAME_CHAR_UUID: Uuid = uuid_from_u16(0x2A00);
 #[repr(u8)]
 pub enum LockState {
     /// Lock is in locked position.
-    Locked = 0x00,
+    Unlocked = 0x00,
     /// Lock is in unlocked position.
-    Unlocked = 0x01,
+    Locked = 0x01,
 }
 
 impl LockState {
@@ -108,8 +108,8 @@ impl LockState {
     #[must_use]
     pub const fn from_byte(byte: u8) -> Option<Self> {
         match byte {
-            0x00 => Some(Self::Locked),
-            0x01 => Some(Self::Unlocked),
+            0x00 => Some(Self::Unlocked),
+            0x01 => Some(Self::Locked),
             _ => None,
         }
     }
