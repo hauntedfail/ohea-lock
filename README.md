@@ -1,6 +1,6 @@
 # Ohea Lock
 
-A Rust library for controlling the [Ohea Lock](https://parts.lixil.co.jp/lixilps/shop/campaign/ohealock) BLE smart lock from LIXIL Corporation.
+A Rust library for controlling the [Ohea Lock](https://parts.lixil.co.jp/lixilps/shop/campaign/ohealock)(おへやろっく) BLE smart lock from LIXIL Corporation.
 
 ## Features
 
