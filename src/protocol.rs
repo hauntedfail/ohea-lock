@@ -45,7 +45,7 @@ pub const DIALOG_OTA_SERVICE_UUID: Uuid = uuid_from_u16(0xFEF5);
 
 /// Lock state characteristic - Read/Write/Notify.
 /// Handle: 0x0027
-/// Values: 0x00 = locked, 0x01 = unlocked
+/// Values: 0x00 = unlocked, 0x01 = locked
 pub const LOCK_STATE_CHAR_UUID: Uuid = Uuid::from_u128(0x0A0F0001_0000_1000_8000_00805F9B34FB);
 
 /// Status notification characteristic - Notify.
@@ -97,10 +97,10 @@ pub const DEVICE_NAME_CHAR_UUID: Uuid = uuid_from_u16(0x2A00);
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u8)]
 pub enum LockState {
-    /// Lock is in locked position.
-    Locked = 0x00,
     /// Lock is in unlocked position.
-    Unlocked = 0x01,
+    Unlocked = 0x00,
+    /// Lock is in locked position.
+    Locked = 0x01,
 }
 
 impl LockState {
@@ -108,8 +108,8 @@ impl LockState {
     #[must_use]
     pub const fn from_byte(byte: u8) -> Option<Self> {
         match byte {
-            0x00 => Some(Self::Locked),
-            0x01 => Some(Self::Unlocked),
+            0x00 => Some(Self::Unlocked),
+            0x01 => Some(Self::Locked),
             _ => None,
         }
     }
@@ -280,8 +280,8 @@ mod tests {
 
     #[test]
     fn lock_state_from_byte_valid_values() {
-        assert_eq!(LockState::from_byte(0x00), Some(LockState::Locked));
-        assert_eq!(LockState::from_byte(0x01), Some(LockState::Unlocked));
+        assert_eq!(LockState::from_byte(0x00), Some(LockState::Unlocked));
+        assert_eq!(LockState::from_byte(0x01), Some(LockState::Locked));
     }
 
     #[test]
@@ -306,8 +306,8 @@ mod tests {
 
     #[test]
     fn lock_state_try_from_valid() {
-        assert_eq!(LockState::try_from(0x00).unwrap(), LockState::Locked);
-        assert_eq!(LockState::try_from(0x01).unwrap(), LockState::Unlocked);
+        assert_eq!(LockState::try_from(0x00).unwrap(), LockState::Unlocked);
+        assert_eq!(LockState::try_from(0x01).unwrap(), LockState::Locked);
     }
 
     #[test]
@@ -318,8 +318,8 @@ mod tests {
 
     #[test]
     fn lock_state_into_u8() {
-        assert_eq!(u8::from(LockState::Locked), 0x00);
-        assert_eq!(u8::from(LockState::Unlocked), 0x01);
+        assert_eq!(u8::from(LockState::Unlocked), 0x00);
+        assert_eq!(u8::from(LockState::Locked), 0x01);
     }
 
     // =========================================================================

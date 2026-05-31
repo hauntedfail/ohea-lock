@@ -21,7 +21,8 @@ use std::time::Duration;
 // =============================================================================
 
 const DEVICE_NAME: &str = "Ohea Lock";
-const SCAN_TIMEOUT: Duration = Duration::from_secs(5);
+const SCAN_TIMEOUT: Duration = Duration::from_secs(12);
+const ONESHOT_SCAN_RETRIES: usize = 3;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum DebugCommand {
@@ -189,19 +190,37 @@ async fn discover_and_select(adapter: &Adapter) -> Result<Peripheral> {
 }
 
 async fn discover_one_shot(adapter: &Adapter) -> Result<Peripheral> {
-    println!(
-        "Scanning for {} devices ({:?})...",
-        DEVICE_NAME, SCAN_TIMEOUT
-    );
+    for attempt in 1..=ONESHOT_SCAN_RETRIES {
+        if attempt > 1 {
+            println!(
+                "Retrying scan (attempt {}/{}).",
+                attempt, ONESHOT_SCAN_RETRIES
+            );
+        }
 
-    let mut devices = scan_ohea_locks(adapter).await?;
-    match devices.len() {
-        0 => Err(ohea_lock::Error::Transport("No device found".into())),
-        1 => Ok(devices.remove(0)),
-        _ => Err(ohea_lock::Error::Transport(
-            "Multiple Ohea Lock devices found; use interactive mode".into(),
-        )),
+        println!(
+            "Scanning for {} devices ({:?})...",
+            DEVICE_NAME, SCAN_TIMEOUT
+        );
+
+        let mut devices = scan_ohea_locks(adapter).await?;
+        match devices.len() {
+            0 => {
+                if attempt < ONESHOT_SCAN_RETRIES {
+                    println!("⚠ No {} found in scan results. retrying...", DEVICE_NAME);
+                }
+                tokio::time::sleep(Duration::from_secs(1)).await;
+            }
+            1 => return Ok(devices.remove(0)),
+            _ => {
+                return Err(ohea_lock::Error::Transport(
+                    "Multiple Ohea Lock devices found; use interactive mode".into(),
+                ));
+            }
+        }
     }
+
+    Err(ohea_lock::Error::Transport("No device found".into()))
 }
 
 async fn scan_ohea_locks(adapter: &Adapter) -> Result<Vec<Peripheral>> {

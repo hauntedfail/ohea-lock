@@ -357,12 +357,12 @@ mod tests {
 
     #[test]
     fn lock_state_conversion() {
-        assert_eq!(LockState::from_byte(0x00), Some(LockState::Locked));
-        assert_eq!(LockState::from_byte(0x01), Some(LockState::Unlocked));
+        assert_eq!(LockState::from_byte(0x00), Some(LockState::Unlocked));
+        assert_eq!(LockState::from_byte(0x01), Some(LockState::Locked));
         assert_eq!(LockState::from_byte(0x02), None);
 
-        assert_eq!(LockState::Locked.as_byte(), 0x00);
-        assert_eq!(LockState::Unlocked.as_byte(), 0x01);
+        assert_eq!(LockState::Unlocked.as_byte(), 0x00);
+        assert_eq!(LockState::Locked.as_byte(), 0x01);
     }
 
     #[test]
@@ -409,7 +409,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn get_lock_state_returns_locked() {
+    async fn get_lock_state_returns_unlocked() {
         let transport = MockTransport::new();
         transport
             .set_response(LOCK_STATE_CHAR_UUID, vec![0x00])
@@ -417,11 +417,11 @@ mod tests {
         let lock = OheaLock::new(transport);
 
         let state = lock.get_lock_state().await.unwrap();
-        assert_eq!(state, LockState::Locked);
+        assert_eq!(state, LockState::Unlocked);
     }
 
     #[tokio::test]
-    async fn get_lock_state_returns_unlocked() {
+    async fn get_lock_state_returns_locked() {
         let transport = MockTransport::new();
         transport
             .set_response(LOCK_STATE_CHAR_UUID, vec![0x01])
@@ -429,7 +429,7 @@ mod tests {
         let lock = OheaLock::new(transport);
 
         let state = lock.get_lock_state().await.unwrap();
-        assert_eq!(state, LockState::Unlocked);
+        assert_eq!(state, LockState::Locked);
     }
 
     #[tokio::test]
@@ -453,7 +453,7 @@ mod tests {
 
         let (uuid, data) = lock.transport().last_write().await.unwrap();
         assert_eq!(uuid, LOCK_STATE_CHAR_UUID);
-        assert_eq!(data, vec![0x01]);
+        assert_eq!(data, vec![0x00]);
     }
 
     #[tokio::test]
@@ -465,7 +465,7 @@ mod tests {
 
         let (uuid, data) = lock.transport().last_write().await.unwrap();
         assert_eq!(uuid, LOCK_STATE_CHAR_UUID);
-        assert_eq!(data, vec![0x00]);
+        assert_eq!(data, vec![0x01]);
     }
 
     #[tokio::test]
