@@ -62,12 +62,27 @@ mod tests {
     #[test]
     fn error_display_messages() {
         let cases = [
-            (Error::CharacteristicNotFound("lock_state"), "characteristic not found: lock_state"),
-            (Error::ServiceNotFound("battery"), "service not found: battery"),
-            (Error::InsufficientAuthentication, "insufficient authentication - pairing required"),
+            (
+                Error::CharacteristicNotFound("lock_state"),
+                "characteristic not found: lock_state",
+            ),
+            (
+                Error::ServiceNotFound("battery"),
+                "service not found: battery",
+            ),
+            (
+                Error::InsufficientAuthentication,
+                "insufficient authentication - pairing required",
+            ),
             (Error::NotConnected, "device not connected"),
-            (Error::Transport("timeout".into()), "transport error: timeout"),
-            (Error::InvalidResponse("empty".into()), "invalid response: empty"),
+            (
+                Error::Transport("timeout".into()),
+                "transport error: timeout",
+            ),
+            (
+                Error::InvalidResponse("empty".into()),
+                "invalid response: empty",
+            ),
             (Error::Timeout, "operation timed out"),
         ];
         for (error, expected) in cases {

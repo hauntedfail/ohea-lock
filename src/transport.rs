@@ -51,6 +51,14 @@ pub trait Transport: Send + Sync {
 
     /// Check if the transport is currently connected.
     fn is_connected(&self) -> bool;
+
+    /// Get the local name from advertising data or peripheral properties.
+    ///
+    /// This is typically more reliable than reading the Device Name characteristic,
+    /// as many devices don't expose it via GATT.
+    fn local_name(&self) -> Option<String> {
+        None
+    }
 }
 
 /// Extension trait providing high-level lock operations on any transport.
@@ -90,11 +98,13 @@ mod tests {
     use std::sync::Arc;
     use tokio::sync::RwLock;
 
+    type RecordedWrites = Arc<RwLock<Vec<(Uuid, Vec<u8>)>>>;
+
     /// Mock transport for testing without hardware.
     #[derive(Default)]
     struct MockTransport {
         responses: Arc<RwLock<HashMap<Uuid, Vec<u8>>>>,
-        writes: Arc<RwLock<Vec<(Uuid, Vec<u8>)>>>,
+        writes: RecordedWrites,
         subscribed: Arc<RwLock<Vec<Uuid>>>,
         connected: bool,
     }
@@ -158,7 +168,7 @@ mod tests {
     // =========================================================================
     // Test UUIDs - using fixed UUIDs instead of random for reproducibility
     // =========================================================================
-    
+
     const TEST_UUID_1: Uuid = Uuid::from_u128(0x12345678_1234_1234_1234_123456789ABC);
     const TEST_UUID_2: Uuid = Uuid::from_u128(0x87654321_4321_4321_4321_CBA987654321);
 
@@ -169,7 +179,9 @@ mod tests {
     #[tokio::test]
     async fn read_string_parses_utf8() {
         let transport = MockTransport::new();
-        transport.set_response(TEST_UUID_1, b"Ohea Lock".to_vec()).await;
+        transport
+            .set_response(TEST_UUID_1, b"Ohea Lock".to_vec())
+            .await;
 
         let result = transport.read_string(TEST_UUID_1).await.unwrap();
         assert_eq!(result, "Ohea Lock");
@@ -188,7 +200,9 @@ mod tests {
     #[tokio::test]
     async fn read_byte_returns_first_byte() {
         let transport = MockTransport::new();
-        transport.set_response(TEST_UUID_1, vec![0x64, 0x00, 0x00]).await;
+        transport
+            .set_response(TEST_UUID_1, vec![0x64, 0x00, 0x00])
+            .await;
 
         let result = transport.read_byte(TEST_UUID_1).await.unwrap();
         assert_eq!(result, 0x64);

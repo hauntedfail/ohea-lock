@@ -164,6 +164,18 @@ impl Transport for BtleplugTransport {
         // In practice, the caller should use the async version when available.
         true
     }
+
+    fn local_name(&self) -> Option<String> {
+        // Use blocking executor to get properties from the peripheral
+        futures::executor::block_on(async {
+            self.peripheral
+                .properties()
+                .await
+                .ok()
+                .flatten()
+                .and_then(|p| p.local_name)
+        })
+    }
 }
 
 /// Map btleplug errors to our error type, detecting authentication errors.

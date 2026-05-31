@@ -189,16 +189,29 @@ impl<T: Transport> OheaLock<T> {
     ///
     /// Returns an error if the read fails or the response is not valid UTF-8.
     pub async fn get_firmware_version(&self) -> Result<String> {
-        self.transport.read_string(FIRMWARE_REVISION_CHAR_UUID).await
+        self.transport
+            .read_string(FIRMWARE_REVISION_CHAR_UUID)
+            .await
     }
 
     /// Get the device name.
     ///
+    /// First attempts to read from the Device Name characteristic (0x2A00).
+    /// Falls back to the local name from advertising data if the characteristic
+    /// is not available.
+    ///
     /// # Errors
     ///
-    /// Returns an error if the read fails or the response is not valid UTF-8.
+    /// Returns an error if both methods fail.
     pub async fn get_device_name(&self) -> Result<String> {
-        self.transport.read_string(DEVICE_NAME_CHAR_UUID).await
+        self.transport
+            .read_string(DEVICE_NAME_CHAR_UUID)
+            .await
+            .or_else(|_| {
+                self.transport
+                    .local_name()
+                    .ok_or_else(|| Error::InvalidResponse("device name not available".into()))
+            })
     }
 
     /// Get comprehensive device information.
@@ -276,10 +289,12 @@ mod tests {
     use std::sync::Arc;
     use tokio::sync::RwLock;
 
-    /// Mock transport for testing OheaLock API.
+    type RecordedWrites = Arc<RwLock<Vec<(uuid::Uuid, Vec<u8>)>>>;
+
+    /// Mock transport for testing `OheaLock` API.
     struct MockTransport {
         responses: Arc<RwLock<HashMap<uuid::Uuid, Vec<u8>>>>,
-        writes: Arc<RwLock<Vec<(uuid::Uuid, Vec<u8>)>>>,
+        writes: RecordedWrites,
         subscribed: Arc<RwLock<Vec<uuid::Uuid>>>,
     }
 
@@ -396,7 +411,9 @@ mod tests {
     #[tokio::test]
     async fn get_lock_state_returns_locked() {
         let transport = MockTransport::new();
-        transport.set_response(LOCK_STATE_CHAR_UUID, vec![0x00]).await;
+        transport
+            .set_response(LOCK_STATE_CHAR_UUID, vec![0x00])
+            .await;
         let lock = OheaLock::new(transport);
 
         let state = lock.get_lock_state().await.unwrap();
@@ -406,7 +423,9 @@ mod tests {
     #[tokio::test]
     async fn get_lock_state_returns_unlocked() {
         let transport = MockTransport::new();
-        transport.set_response(LOCK_STATE_CHAR_UUID, vec![0x01]).await;
+        transport
+            .set_response(LOCK_STATE_CHAR_UUID, vec![0x01])
+            .await;
         let lock = OheaLock::new(transport);
 
         let state = lock.get_lock_state().await.unwrap();
@@ -416,7 +435,9 @@ mod tests {
     #[tokio::test]
     async fn get_lock_state_errors_on_invalid_value() {
         let transport = MockTransport::new();
-        transport.set_response(LOCK_STATE_CHAR_UUID, vec![0xFF]).await;
+        transport
+            .set_response(LOCK_STATE_CHAR_UUID, vec![0xFF])
+            .await;
         let lock = OheaLock::new(transport);
 
         let result = lock.get_lock_state().await;
@@ -450,7 +471,9 @@ mod tests {
     #[tokio::test]
     async fn get_battery_level_returns_percentage() {
         let transport = MockTransport::new();
-        transport.set_response(BATTERY_LEVEL_CHAR_UUID, vec![0x64]).await; // 100%
+        transport
+            .set_response(BATTERY_LEVEL_CHAR_UUID, vec![0x64])
+            .await; // 100%
         let lock = OheaLock::new(transport);
 
         let level = lock.get_battery_level().await.unwrap();
@@ -460,7 +483,9 @@ mod tests {
     #[tokio::test]
     async fn get_firmware_version_returns_string() {
         let transport = MockTransport::new();
-        transport.set_response(FIRMWARE_REVISION_CHAR_UUID, b"1.0".to_vec()).await;
+        transport
+            .set_response(FIRMWARE_REVISION_CHAR_UUID, b"1.0".to_vec())
+            .await;
         let lock = OheaLock::new(transport);
 
         let version = lock.get_firmware_version().await.unwrap();
@@ -470,7 +495,9 @@ mod tests {
     #[tokio::test]
     async fn get_device_name_returns_ohea_lock() {
         let transport = MockTransport::new();
-        transport.set_response(DEVICE_NAME_CHAR_UUID, b"Ohea Lock".to_vec()).await;
+        transport
+            .set_response(DEVICE_NAME_CHAR_UUID, b"Ohea Lock".to_vec())
+            .await;
         let lock = OheaLock::new(transport);
 
         let name = lock.get_device_name().await.unwrap();
@@ -480,9 +507,15 @@ mod tests {
     #[tokio::test]
     async fn get_device_info_aggregates_all_fields() {
         let transport = MockTransport::new();
-        transport.set_response(DEVICE_NAME_CHAR_UUID, b"Ohea Lock".to_vec()).await;
-        transport.set_response(FIRMWARE_REVISION_CHAR_UUID, b"1.0".to_vec()).await;
-        transport.set_response(BATTERY_LEVEL_CHAR_UUID, vec![0x64]).await;
+        transport
+            .set_response(DEVICE_NAME_CHAR_UUID, b"Ohea Lock".to_vec())
+            .await;
+        transport
+            .set_response(FIRMWARE_REVISION_CHAR_UUID, b"1.0".to_vec())
+            .await;
+        transport
+            .set_response(BATTERY_LEVEL_CHAR_UUID, vec![0x64])
+            .await;
         let lock = OheaLock::new(transport);
 
         let info = lock.get_device_info().await.unwrap();
@@ -517,4 +550,3 @@ mod tests {
         assert!(result.is_ok());
     }
 }
-

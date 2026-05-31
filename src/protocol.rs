@@ -98,9 +98,9 @@ pub const DEVICE_NAME_CHAR_UUID: Uuid = uuid_from_u16(0x2A00);
 #[repr(u8)]
 pub enum LockState {
     /// Lock is in locked position.
-    Unlocked = 0x00,
+    Locked = 0x00,
     /// Lock is in unlocked position.
-    Locked = 0x01,
+    Unlocked = 0x01,
 }
 
 impl LockState {
@@ -108,8 +108,8 @@ impl LockState {
     #[must_use]
     pub const fn from_byte(byte: u8) -> Option<Self> {
         match byte {
-            0x00 => Some(Self::Unlocked),
-            0x01 => Some(Self::Locked),
+            0x00 => Some(Self::Locked),
+            0x01 => Some(Self::Unlocked),
             _ => None,
         }
     }
@@ -137,8 +137,9 @@ impl TryFrom<u8> for LockState {
     type Error = crate::Error;
 
     fn try_from(value: u8) -> Result<Self, Self::Error> {
-        Self::from_byte(value)
-            .ok_or_else(|| crate::Error::InvalidResponse(format!("invalid lock state: {value:#04x}")))
+        Self::from_byte(value).ok_or_else(|| {
+            crate::Error::InvalidResponse(format!("invalid lock state: {value:#04x}"))
+        })
     }
 }
 
@@ -232,15 +233,28 @@ mod tests {
         let cases = [
             (LOCK_STATE_CHAR_UUID, "0A0F0001-0000-1000-8000-00805F9B34FB"),
             (STATUS_CHAR_UUID, "0A0F0011-0000-1000-8000-00805F9B34FB"),
-            (LOCK_POSITION_CHAR_UUID, "0A0F0002-0000-1000-8000-00805F9B34FB"),
+            (
+                LOCK_POSITION_CHAR_UUID,
+                "0A0F0002-0000-1000-8000-00805F9B34FB",
+            ),
             (COMMAND_CHAR_UUID, "0A0F0003-0000-1000-8000-00805F9B34FB"),
-            (DEVICE_INFO_CHAR_UUID, "0A0F0004-0000-1000-8000-00805F9B34FB"),
-            (EXTENDED_INFO_CHAR_UUID, "0A0F1004-0000-1000-8000-00805F9B34FB"),
+            (
+                DEVICE_INFO_CHAR_UUID,
+                "0A0F0004-0000-1000-8000-00805F9B34FB",
+            ),
+            (
+                EXTENDED_INFO_CHAR_UUID,
+                "0A0F1004-0000-1000-8000-00805F9B34FB",
+            ),
             (CONFIG_CHAR_UUID, "0A0F0005-0000-1000-8000-00805F9B34FB"),
             (CONTROL_CHAR_UUID, "0A0F0006-0000-1000-8000-00805F9B34FB"),
         ];
         for (uuid, expected) in cases {
-            assert_eq!(uuid, Uuid::parse_str(expected).unwrap(), "UUID mismatch for {expected}");
+            assert_eq!(
+                uuid,
+                Uuid::parse_str(expected).unwrap(),
+                "UUID mismatch for {expected}"
+            );
         }
     }
 
@@ -277,9 +291,9 @@ mod tests {
 
     #[test]
     fn lock_state_as_byte_roundtrip() {
-        [LockState::Locked, LockState::Unlocked]
-            .into_iter()
-            .for_each(|s| assert_eq!(LockState::from_byte(s.as_byte()), Some(s)));
+        for state in [LockState::Locked, LockState::Unlocked] {
+            assert_eq!(LockState::from_byte(state.as_byte()), Some(state));
+        }
     }
 
     #[test]
@@ -331,7 +345,10 @@ mod tests {
     fn device_name_matches_packet_capture() {
         // From packet capture: "Ohea Lock" = 4F 68 65 61 20 4C 6F 63 6B
         assert_eq!(DEVICE_NAME, "Ohea Lock");
-        assert_eq!(DEVICE_NAME.as_bytes(), &[0x4F, 0x68, 0x65, 0x61, 0x20, 0x4C, 0x6F, 0x63, 0x6B]);
+        assert_eq!(
+            DEVICE_NAME.as_bytes(),
+            &[0x4F, 0x68, 0x65, 0x61, 0x20, 0x4C, 0x6F, 0x63, 0x6B]
+        );
     }
 
     #[test]

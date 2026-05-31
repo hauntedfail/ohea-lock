@@ -126,12 +126,30 @@ lock.unsubscribe_all().await?;
 cargo test --features btleplug-support
 ```
 
-## Interactive Debug Tool
+## Debug Tool
 
-For hardware debugging and interactive testing:
+For hardware debugging and testing:
 
 ```bash
 cargo run --example debug --features btleplug-support
+```
+
+Run a single command and exit:
+
+```bash
+cargo run --example debug --features btleplug-support -- state
+cargo run --example debug --features btleplug-support -- lock
+cargo run --example debug --features btleplug-support -- unlock
+cargo run --example debug --features btleplug-support -- toggle
+cargo run --example debug --features btleplug-support -- info
+cargo run --example debug --features btleplug-support -- read-all
+```
+
+Install the debug example as a local command:
+
+```bash
+scripts/install-debug-bin.sh
+/Users/vvx/.local/bin/ohea-lock-debug state
 ```
 
 ## License
